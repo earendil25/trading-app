@@ -22,8 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const gameOverModal = document.getElementById('gameOverModal');
     const finalPnlElement = document.getElementById('finalPnl');
     const restartBtn = document.getElementById('restartBtn');
+    const headerRestartBtn = document.getElementById('headerRestartBtn'); // 새로 추가된 버튼
     const shareBtn = document.getElementById('shareBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');  // 추가된 부분
+    const closeModalBtn = document.getElementById('closeModalBtn');
     
     // 게임 초기화
     initGame();
@@ -33,8 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
     neutralBtn.addEventListener('click', () => submitTrade('neutral'));
     shortBtn.addEventListener('click', () => submitTrade('short'));
     restartBtn.addEventListener('click', restartGame);
+    headerRestartBtn.addEventListener('click', restartGameWithConfirm); // 새로운 이벤트 리스너
     shareBtn.addEventListener('click', shareResults);
-    closeModalBtn.addEventListener('click', closeGameOverModal);  // 추가된 부분
+    closeModalBtn.addEventListener('click', closeGameOverModal);
     
     // 게임 상태 저장 함수
     function saveGameState() {
@@ -125,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // PnL 차트 초기화 함수 - 성능 최적화
+    // PnL 차트 초기화 함수 - 성능 최적화 및 모든 글씨 제거
     function initPnlChart() {
         const ctx = document.getElementById('pnlChart').getContext('2d');
         
@@ -149,68 +151,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     tension: 0.1,
-                    fill: false,
-                    pointRadius: 3, // 포인트 크기 줄임
-                    pointHoverRadius: 5 // 호버 시 포인트 크기 줄임
+                    fill: true,
+                    pointRadius: 2, // 포인트 크기 줄임
+                    pointHoverRadius: 4, // 호버 시 포인트 크기 줄임
+                    borderWidth: 1.5 // 선 두께 줄임
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: {
-                    duration: 300 // 애니메이션 시간 줄임
+                    duration: 150 // 애니메이션 시간 대폭 줄임
                 },
-                elements: {
-                    line: {
-                        borderWidth: 2 // 선 두께 줄임
-                    }
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 },
                 scales: {
                     y: {
+                        display: false, // y축 숨김
                         beginAtZero: false,
-                        title: {
-                            display: true,
-                            text: '누적 PnL (%)',
-                            font: {
-                                size: 10 // 글자 크기 줄임
-                            }
-                        },
-                        ticks: {
-                            font: {
-                                size: 10 // 글자 크기 줄임
-                            }
-                        },
                         grid: {
-                            display: true,
-                            color: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 'rgba(0, 0, 0, 0.2)';
-                                }
-                                return 'rgba(0, 0, 0, 0.1)';
-                            },
-                            lineWidth: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 2;
-                                }
-                                return 1;
-                            }
+                            display: false // 그리드 숨김
                         }
                     },
                     x: {
-                        title: {
-                            display: true,
-                            text: '주차',
-                            font: {
-                                size: 10 // 글자 크기 줄임
-                            }
-                        },
-                        ticks: {
-                            font: {
-                                size: 10, // 글자 크기 줄임
-                                maxRotation: 0, // 회전 없음
-                                autoSkip: true, // 자동 건너뛰기
-                                maxTicksLimit: 8 // 최대 표시 개수 제한
-                            }
+                        display: false, // x축 숨김
+                        grid: {
+                            display: false // 그리드 숨김
                         }
                     }
                 },
@@ -220,9 +188,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     tooltip: {
                         enabled: true,
+                        mode: 'index',
+                        intersect: false,
                         callbacks: {
                             label: function(context) {
-                                return `누적 PnL: ${context.parsed.y.toFixed(2)}%`;
+                                return `PnL: ${context.parsed.y.toFixed(2)}%`;
                             }
                         }
                     }
@@ -285,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 차트 렌더링 함수
+    // 주가 차트 렌더링 함수 수정
     function renderChart() {
         const ctx = document.getElementById('stockChart').getContext('2d');
         
@@ -358,35 +328,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     x: {
                         type: 'linear',
                         position: 'bottom',
-                        ticks: {
-                            callback: function(value) {
-                                // 인덱스를 주차로 변환
-                                if (value >= 0 && value < stockData.length) {
-                                    return stockData[value].date;
-                                }
-                                return '';
-                            },
-                            maxRotation: 45,
-                            minRotation: 45,
-                            autoSkip: true,
-                            maxTicksLimit: 10
-                        },
+                        display: false, // x축 숨김
                         grid: {
-                            display: false
+                            display: false // 그리드 숨김
                         }
                     },
                     y: {
                         position: 'right',
-                        title: {
-                            display: true,
-                            text: '가격'
-                        },
+                        display: false, // y축 숨김
                         min: minPrice, // Y축 최소값 설정
                         max: maxPrice, // Y축 최대값 설정
-                        ticks: {
-                            callback: function(value) {
-                                return value.toFixed(2);
-                            }
+                        grid: {
+                            display: false // 그리드 숨김
                         }
                     }
                 },
@@ -402,27 +355,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (context.dataset.type === 'candlestick') {
                                     const dataPoint = context.raw;
                                     return [
-                                        `시가: ${dataPoint.o.toFixed(2)}`,
-                                        `고가: ${dataPoint.h.toFixed(2)}`,
-                                        `저가: ${dataPoint.l.toFixed(2)}`,
-                                        `종가: ${dataPoint.c.toFixed(2)}`
+                                        `Open: ${dataPoint.o.toFixed(2)}`,
+                                        `High: ${dataPoint.h.toFixed(2)}`,
+                                        `Low: ${dataPoint.l.toFixed(2)}`,
+                                        `Close: ${dataPoint.c.toFixed(2)}`
                                     ];
                                 } else if (context.dataset.label === '종가') {
-                                    return `종가: ${context.parsed.y.toFixed(2)}`;
+                                    return `Close: ${context.parsed.y.toFixed(2)}`;
                                 }
                             }
                         }
                     },
                     legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            boxWidth: 10,
-                            padding: 10,
-                            font: {
-                                size: 10
-                            }
-                        }
+                        display: false // 범례 숨김
                     }
                 }
             }
@@ -674,20 +619,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // 게임 재시작 - 확인 대화상자 표시
+    function restartGameWithConfirm() {
+        if (confirm('Are you sure you want to restart the game? Current progress will not be saved.')) {
+            restartGame();
+        }
+    }
+    
     // 게임 결과 공유
     function shareResults() {
-        // 공유할 텍스트 생성 - 누적 PnL, 종목, 기간 및 게임 링크 포함
-        const shareText = `주식 모의 트레이딩 게임에서 ${formatPnl(totalPnl)}의 수익률을 달성했습니다!
-거래종목: ${gameInfo.ticker}
-기간: 2024-09-16 -- 2024-12-30
-당신도 도전해보세요!`;
+        // 공유할 텍스트 생성 - 누적 Profit, 종목, 기간 및 게임 링크 포함
+        const shareText = `I achieved a return of ${formatPnl(totalPnl)} in the Stock Trading Simulator!
+Ticker: ${gameInfo.ticker}
+Period: 2024-09-16 -- 2024-12-30
+Try it yourself!`;
         
         const shareUrl = window.location.href;
         const fullShareText = `${shareText}\n${shareUrl}`;
         
         // 공유 데이터 생성
         const shareData = {
-            title: '주식 모의 트레이딩 게임 결과',
+            title: 'Stock Trading Simulator Results',
             text: shareText,
             url: shareUrl
         };
@@ -696,11 +648,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (navigator.share && navigator.canShare(shareData)) {
             navigator.share(shareData)
                 .then(() => {
-                    console.log('공유 성공');
-                    showShareNotification('결과가 성공적으로 공유되었습니다!');
+                    console.log('Share successful');
+                    showShareNotification('Results shared successfully!');
                 })
                 .catch((error) => {
-                    console.log('공유 실패:', error);
+                    console.log('Share failed:', error);
                     // 공유 실패 시 클립보드에 복사
                     copyToClipboard(fullShareText);
                 });
@@ -710,20 +662,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 클립보드에 복사하는 함수 (코드 분리)
+    // 클립보드에 복사하는 함수
     function copyToClipboard(text) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text)
                 .then(() => {
-                    showShareNotification('결과가 클립보드에 복사되었습니다!');
+                    showShareNotification('Results copied to clipboard!');
                 })
                 .catch(err => {
-                    console.error('클립보드 복사 실패:', err);
-                    // 대체 방법: 텍스트 영역 생성 후 복사
+                    console.error('Clipboard copy failed:', err);
                     fallbackCopyToClipboard(text);
                 });
         } else {
-            // 구형 브라우저 지원
             fallbackCopyToClipboard(text);
         }
     }
@@ -732,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fallbackCopyToClipboard(text) {
         const textArea = document.createElement('textarea');
         textArea.value = text;
-        textArea.style.position = 'fixed';  // 화면 밖으로 위치시킴
+        textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
         document.body.appendChild(textArea);
@@ -742,13 +692,13 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const successful = document.execCommand('copy');
             if (successful) {
-                showShareNotification('결과가 클립보드에 복사되었습니다!');
+                showShareNotification('Results copied to clipboard!');
             } else {
-                showShareNotification('클립보드 복사에 실패했습니다.');
+                showShareNotification('Failed to copy to clipboard.');
             }
         } catch (err) {
-            console.error('클립보드 복사 실패:', err);
-            showShareNotification('클립보드 복사에 실패했습니다.');
+            console.error('Clipboard copy failed:', err);
+            showShareNotification('Failed to copy to clipboard.');
         }
         
         document.body.removeChild(textArea);

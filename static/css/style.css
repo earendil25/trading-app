@@ -3,62 +3,97 @@
     margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
+    -webkit-tap-highlight-color: transparent; /* 모바일에서 탭 시 하이라이트 제거 */
 }
 
 body {
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
+    font-size: 16px;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 1200px;
+        padding: 20px;
+    }
 }
 
 h1 {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
     color: #2c3e50;
-}
-
-.game-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-bottom: 30px;
+    font-size: 1.5rem;
 }
 
 @media (min-width: 768px) {
-    .game-container {
-        flex-direction: row;
+    h1 {
+        margin-bottom: 30px;
+        font-size: 2rem;
     }
 }
 
-.chart-container {
-    flex: 2;
-    min-height: 450px;
+/* 게임 컨테이너 - 항상 세로 배치 */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 15px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 992px) {
+    .game-container {
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+}
+
+/* 차트 컨테이너 - 패딩 줄임 */
+.chart-container {
+    width: 100%;
+    min-height: 250px;
+    background-color: white;
+    padding: 5px; /* 패딩 줄임 */
     border-radius: 5px;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
+@media (min-width: 768px) {
+    .chart-container {
+        min-height: 350px;
+        padding: 8px; /* 패딩 줄임 */
+    }
+}
+
+/* 정보 패널 - 모바일에서 최적화 */
 .info-panel {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
+    gap: 15px;
+    padding: 15px;
     background-color: #f8f9fa;
     border-radius: 8px;
 }
 
+/* 주차 정보 */
 .week-info {
     text-align: center;
     padding: 10px;
@@ -66,6 +101,11 @@ h1 {
     border-radius: 5px;
 }
 
+.week-info h2 {
+    font-size: 1.2rem;
+}
+
+/* 트레이딩 패널 */
 .trading-panel {
     padding: 15px;
     background-color: white;
@@ -73,21 +113,36 @@ h1 {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.trading-panel h3 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+/* 포지션 버튼 - 모바일에서 더 큰 터치 영역 */
 .position-buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 .position-btn {
     flex: 1;
-    padding: 10px;
-    margin: 0 5px;
+    padding: 12px 8px;
+    margin: 0 4px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+    .position-btn {
+        padding: 10px;
+        font-size: 1rem;
+    }
 }
 
 #longBtn {
@@ -110,407 +165,240 @@ h1 {
     transform: translateY(-2px);
 }
 
+/* 모바일에서는 호버 효과 제거 */
+@media (hover: none) {
+    .position-btn:hover {
+        transform: none;
+    }
+}
+
+/* 결과 패널 - 모바일에서 세로 배치 */
 .result-panel {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     gap: 10px;
+}
+
+@media (min-width: 768px) {
+    .result-panel {
+        flex-direction: row;
+    }
 }
 
 .weekly-result, .total-result {
     flex: 1;
-    padding: 15px;
+    padding: 12px;
     background-color: white;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     text-align: center;
 }
 
+.weekly-result h3, .total-result h3 {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
 #weeklyPnl, #totalPnl {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
-.history-container {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+@media (min-width: 768px) {
+    .weekly-result h3, .total-result h3 {
+        font-size: 1rem;
+    }
+    
+    #weeklyPnl, #totalPnl {
+        font-size: 1.5rem;
+    }
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-th {
-    background-color: #f8f9fa;
-    font-weight: bold;
-}
-
-tr:hover {
-    background-color: #f5f5f5;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    max-width: 500px;
-    width: 90%;
-}
-
-#finalPnl {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 20px 0;
-    display: block;
-}
-
-#restartBtn {
-    padding: 12px 24px;
-    background-color: #2c3e50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
-}
-
-#restartBtn:hover {
-    background-color: #1a252f;
-}
-
-.positive {
-    color: #4caf50;
-}
-
-.negative {
-    color: #f44336;
-}
-
-.neutral {
-    color: #757575;
-}
-
-/* 누적 PnL 차트 컨테이너 스타일 수정 */
+/* PnL 차트 컨테이너 - 패딩 줄임 */
 .pnl-chart-container {
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-bottom: 30px;
-    height: 250px; /* 높이 고정 */
+    padding: 10px; /* 패딩 줄임 */
+    margin-bottom: 20px;
+    height: 180px;
+}
+
+@media (min-width: 768px) {
+    .pnl-chart-container {
+        height: 250px;
+        padding: 15px; /* 패딩 줄임 */
+    }
 }
 
 .pnl-chart-container h2 {
     text-align: center;
-    margin-bottom: 10px; /* 여백 줄임 */
-    color: #2c3e50;
-    font-size: 1.2rem; /* 글자 크기 줄임 */
-}
-
-/* 모달 버튼 컨테이너 */
-.modal-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-/* 모달 버튼 공통 스타일 */
-.modal-btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s;
-}
-
-/* 다시 시작 버튼 */
-#restartBtn {
-    background-color: #2c3e50;
-    color: white;
-}
-
-#restartBtn:hover {
-    background-color: #1a252f;
-}
-
-/* 결과 공유 버튼 */
-.share-btn {
-    background-color: #3498db;
-    color: white;
-}
-
-.share-btn:hover {
-    background-color: #2980b9;
-}
-
-/* 공유 알림 스타일 개선 */
-.share-notification {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background-color: #2ecc71;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    opacity: 0;
-    transition: all 0.3s ease;
-    font-weight: bold;
-    text-align: center;
-    min-width: 250px;
-}
-
-.share-notification.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-/* 광고 컨테이너 스타일 */
-.ad-container {
-    width: 100%;
-    margin: 20px 0;
-    text-align: center;
-    overflow: hidden;
-    min-height: 90px; /* 광고 높이에 따라 조정 */
-}
-
-/* 상단 광고 특별 스타일 */
-.ad-container-top {
-    margin-top: 0;
-    margin-bottom: 30px;
-}
-
-/* 하단 광고 특별 스타일 */
-.ad-container-bottom {
-    margin-top: 30px;
-    margin-bottom: 0;
-}
-
-/* 게임 정보 스타일 개선 */
-.game-info {
-    margin: 15px 0;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    text-align: left;
-    border-left: 4px solid #3498db;
-}
-
-.game-info p {
-    margin: 8px 0;
-    font-size: 1rem;
-    line-height: 1.4;
-}
-
-#gameTicker {
-    font-weight: bold;
+    margin-bottom: 10px;
     color: #2c3e50;
     font-size: 1.1rem;
 }
 
-#gamePeriod {
-    font-family: monospace;
-    color: #555;
-    background-color: #eee;
-    padding: 2px 5px;
-    border-radius: 3px;
-} 
+@media (min-width: 768px) {
+    .pnl-chart-container h2 {
+        font-size: 1.3rem;
+    }
+}
 
-/* 로딩 인디케이터 */
-.loading-indicator {
+/* 트레이딩 기록 컨테이너 - 모바일에서 스크롤 가능하게 */
+.history-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.history-container h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+@media (min-width: 768px) {
+    .history-container {
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .history-container h2 {
+        font-size: 1.3rem;
+    }
+}
+
+#historyTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 300px;
+}
+
+#historyTable th, #historyTable td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+#historyTable th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+}
+
+#historyTable tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* 모달 - 모바일에서 최적화 */
+.modal {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
+    padding: 10px;
 }
 
-.loading-indicator.show {
-    opacity: 1;
-    visibility: visible;
+.modal-content {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    position: relative;
+    width: 90%;
+    max-width: 500px;
 }
 
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+@media (min-width: 768px) {
+    .modal-content {
+        padding: 30px;
+        width: 80%;
+    }
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.modal h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 1.5rem;
 }
 
-.loading-indicator p {
-    margin-top: 15px;
-    color: white;
-    font-size: 16px;
-}
-
-/* 오류 메시지 */
-.error-message {
-    background-color: #fff3f3;
-    border-left: 4px solid #e74c3c;
-    padding: 15px;
-    margin: 15px 0;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.error-message h3 {
-    color: #e74c3c;
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.error-message p {
+.modal p {
     margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.1rem;
 }
 
-.error-actions {
+.game-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.game-info p {
+    margin-bottom: 10px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+/* 모달 버튼 - 모바일에서 세로 배치 */
+.modal-buttons {
     display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
-.error-btn {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s;
+@media (min-width: 768px) {
+    .modal-buttons {
+        flex-direction: row;
+        justify-content: center;
+    }
 }
 
-.error-btn {
+.modal-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
     background-color: #3498db;
     color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 0.9rem;
 }
 
-.error-btn:hover {
+@media (min-width: 768px) {
+    .modal-btn {
+        font-size: 1rem;
+    }
+}
+
+.modal-btn:hover {
     background-color: #2980b9;
 }
 
-.debug-btn {
-    background-color: #95a5a6;
-    color: white;
-}
-
-.debug-btn:hover {
-    background-color: #7f8c8d;
-}
-
-/* 디버그 정보 */
-.debug-info {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
-    max-width: 600px;
-    max-height: 80vh;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    z-index: 1100;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.debug-info h3 {
-    margin-top: 0;
-    color: #2c3e50;
-}
-
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #95a5a6;
-}
-
-.close-btn:hover {
-    color: #7f8c8d;
-}
-
-.debug-content {
-    margin-top: 10px;
-}
-
-.file-preview {
+/* 광고 컨테이너 */
+.ad-container {
+    width: 100%;
     margin: 15px 0;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    overflow-x: auto;
+    text-align: center;
+    overflow: hidden;
+    min-height: 90px;
 }
 
-.file-preview pre {
-    margin: 0;
-    font-family: monospace;
-    font-size: 12px;
-    white-space: pre-wrap;
-}
-
-.system-info {
-    margin: 15px 0;
-    padding: 10px;
-    background-color: #edf2f7;
-    border-radius: 4px;
-}
-
-.debug-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-/* 모달 닫기 버튼 스타일 */
+/* 모달 닫기 버튼 - 모바일에서 더 큰 터치 영역 */
 .close-modal {
     position: absolute;
     top: 10px;
@@ -519,6 +407,7 @@ tr:hover {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    padding: 8px; /* 터치 영역 확대 */
 }
 
 .close-modal:hover,
@@ -534,4 +423,91 @@ tr:hover {
 
 .secondary-btn:hover {
     background-color: #7f8c8d;
+}
+
+/* 공유 알림 스타일 */
+.share-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 5px;
+    z-index: 1100;
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    text-align: center;
+    max-width: 90%;
+}
+
+.share-notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* PnL 색상 클래스 */
+.positive {
+    color: #4caf50;
+}
+
+.negative {
+    color: #f44336;
+}
+
+.neutral {
+    color: #95a5a6;
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* 헤더 컨테이너 스타일 */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* 제목 스타일 조정 */
+.header-container h1 {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+/* 다시 시작 버튼 스타일 */
+.restart-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.restart-btn:hover {
+    background-color: #2980b9;
+}
+
+@media (min-width: 768px) {
+    .header-container {
+        margin-bottom: 25px;
+    }
+    
+    .restart-btn {
+        padding: 10px 15px;
+        font-size: 1rem;
+    }
 }

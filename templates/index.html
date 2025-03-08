@@ -1,24 +1,27 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주식 모의 트레이딩</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stock Trading Simulator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
     
-    <!-- Google AdSense 코드 -->
+    <!-- Google AdSense Code -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7996614717338477"
      crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container">
-        <h1>주식 모의 트레이딩</h1>
+        <div class="header-container">
+            <h1>Stock Trading Simulator</h1>
+            <button id="headerRestartBtn" class="restart-btn">Restart</button>
+        </div>
         
-        <!-- 상단 광고 -->
+        <!-- Top Ad -->
         <div class="ad-container">
             <ins class="adsbygoogle"
                  style="display:block"
@@ -31,18 +34,23 @@
             </script>
         </div>
         
+        <!-- Week info - Better visibility on mobile -->
+        <div class="week-info">
+            <h2>Week: <span id="currentWeek">16</span>/31</h2>
+        </div>
+        
+        <!-- Game container -->
         <div class="game-container">
+            <!-- Chart container -->
             <div class="chart-container">
                 <canvas id="stockChart"></canvas>
             </div>
             
+            <!-- Info panel -->
             <div class="info-panel">
-                <div class="week-info">
-                    <h2>Week <span id="currentWeek">16</span>/31</h2>
-                </div>
-                
+                <!-- Trading panel -->
                 <div class="trading-panel">
-                    <h3>포지션 선택</h3>
+                    <h3>Select Position</h3>
                     <div class="position-buttons">
                         <button id="longBtn" class="position-btn">Long</button>
                         <button id="neutralBtn" class="position-btn">Neutral</button>
@@ -50,60 +58,64 @@
                     </div>
                 </div>
                 
+                <!-- Result panel -->
                 <div class="result-panel">
                     <div class="weekly-result">
-                        <h3>이번 주 PnL</h3>
+                        <h3>Weekly Profit</h3>
                         <p id="weeklyPnl">0.00%</p>
                     </div>
                     
                     <div class="total-result">
-                        <h3>누적 PnL</h3>
+                        <h3>Total Profit</h3>
                         <p id="totalPnl">0.00%</p>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Profit chart -->
         <div class="pnl-chart-container">
-            <h2>누적 PnL 추이</h2>
+            <h2>Profit Trend</h2>
             <canvas id="pnlChart"></canvas>
         </div>
         
+        <!-- Trading history -->
         <div class="history-container">
-            <h2>트레이딩 기록</h2>
+            <h2>Trading History</h2>
             <table id="historyTable">
                 <thead>
                     <tr>
-                        <th>주차</th>
-                        <th>포지션</th>
-                        <th>PnL</th>
+                        <th>Week</th>
+                        <th>Position</th>
+                        <th>Profit</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- 트레이딩 기록이 여기에 추가됩니다 -->
+                    <!-- Trading history will be added here -->
                 </tbody>
             </table>
         </div>
         
+        <!-- Game over modal -->
         <div id="gameOverModal" class="modal">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <h2>게임 종료!</h2>
-                <p>최종 수익률: <span id="finalPnl">0.00%</span></p>
-                <p>Buy and Hold 수익률: <span id="buyHoldPnl">0.00%</span></p>
+                <h2>Game Over!</h2>
+                <p>Final Return: <span id="finalPnl">0.00%</span></p>
+                <p>Buy and Hold Return: <span id="buyHoldPnl">0.00%</span></p>
                 <div class="game-info">
-                    <p>종목: <span id="gameTicker">Unknown</span></p>
-                    <p>기간: <span id="gamePeriod">2024-09-16 -- 2024-12-30</span></p>
+                    <p>Ticker: <span id="gameTicker">Unknown</span></p>
+                    <p>Period: <span id="gamePeriod">2024-09-16 -- 2024-12-30</span></p>
                 </div>
                 <div class="modal-buttons">
-                    <button id="restartBtn" class="modal-btn">다시 시작</button>
-                    <button id="shareBtn" class="modal-btn">결과 공유</button>
-                    <button id="closeModalBtn" class="modal-btn secondary-btn">닫기</button>
+                    <button id="restartBtn" class="modal-btn">Restart</button>
+                    <button id="shareBtn" class="modal-btn">Share Results</button>
+                    <button id="closeModalBtn" class="modal-btn secondary-btn">Close</button>
                 </div>
             </div>
         </div>
         
-        <!-- 기존 하단 광고 -->
+        <!-- Bottom Ad -->
         <div class="ad-container">
             <ins class="adsbygoogle"
                  style="display:block"
