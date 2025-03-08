@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const finalPnlElement = document.getElementById('finalPnl');
     const restartBtn = document.getElementById('restartBtn');
     const shareBtn = document.getElementById('shareBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');  // 추가된 부분
     
     // 게임 초기화
     initGame();
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     shortBtn.addEventListener('click', () => submitTrade('short'));
     restartBtn.addEventListener('click', restartGame);
     shareBtn.addEventListener('click', shareResults);
+    closeModalBtn.addEventListener('click', closeGameOverModal);  // 추가된 부분
     
     // 게임 상태 저장 함수
     function saveGameState() {
@@ -581,6 +583,34 @@ document.addEventListener('DOMContentLoaded', function() {
         finalPnlElement.textContent = formatPnl(totalPnl);
         finalPnlElement.className = getPnlColorClass(totalPnl);
         
+        // Buy and Hold PnL 계산 및 표시
+        const buyHoldPnlElement = document.getElementById('buyHoldPnl');
+        
+        // 서버에서 Buy and Hold PnL 가져오기
+        fetch('/api/buy-hold-pnl', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ticker: gameInfo.ticker
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.buyHoldPnl) {
+                const buyHoldPnl = data.buyHoldPnl;
+                buyHoldPnlElement.textContent = formatPnl(buyHoldPnl);
+                buyHoldPnlElement.className = getPnlColorClass(buyHoldPnl);
+            } else {
+                buyHoldPnlElement.textContent = "계산 불가";
+            }
+        })
+        .catch(error => {
+            console.error('Buy and Hold PnL 계산 오류:', error);
+            buyHoldPnlElement.textContent = "계산 오류";
+        });
+        
         // 게임 정보 표시 업데이트 - 요소 존재 여부 확인 추가
         const gameTickerElement = document.getElementById('gameTicker');
         const gamePeriodElement = document.getElementById('gamePeriod');
@@ -752,5 +782,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 300);
         }, 3000);
+    }
+    
+    // 모달 닫기 함수
+    function closeGameOverModal() {
+        gameOverModal.style.display = 'none';
     }
 }); 

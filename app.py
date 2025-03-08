@@ -293,5 +293,48 @@ def restart_game():
         print(f"게임 재시작 중 오류 발생: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/buy-hold-pnl', methods=['POST'])
+def get_buy_hold_pnl():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '요청 데이터가 없습니다.'}), 400
+            
+        ticker = data.get('ticker')
+        if not ticker:
+            return jsonify({'error': 'ticker 정보가 없습니다.'}), 400
+        
+        # 세션에서 주식 데이터 가져오기
+        session_id = session.get('game_session_id')
+        
+        # 데이터 로드
+        stock_data, _ = load_stock_data(ticker=ticker)
+        
+        if not stock_data or len(stock_data) < 32:
+            return jsonify({'error': '주식 데이터가 충분하지 않습니다.'}), 400
+        
+        # Buy and Hold 전략 (모든 주차에 Long 포지션)
+        buy_hold_pnl = 0
+        
+        # 16주차부터 31주차까지 계산 (게임과 동일한 기간)
+        for i in range(16, min(32, len(stock_data))):
+            if i >= 16:  # 첫 주차는 건너뜀
+                prev_data = stock_data[i-1]
+                current_data = stock_data[i]
+                
+                # Long 포지션의 PnL 계산
+                week_pnl = calculate_pnl('long', prev_data, current_data)
+                buy_hold_pnl += week_pnl
+        
+        return jsonify({
+            'buyHoldPnl': round(buy_hold_pnl, 2)
+        })
+    
+    except Exception as e:
+        print(f"Buy and Hold PnL 계산 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 
