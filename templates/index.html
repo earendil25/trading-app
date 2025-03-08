@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주식 모의 트레이딩</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>주식 모의 트레이딩</h1>
+        
+        <div class="game-container">
+            <div class="chart-container">
+                <canvas id="stockChart"></canvas>
+            </div>
+            
+            <div class="info-panel">
+                <div class="week-info">
+                    <h2>Week <span id="currentWeek">16</span>/31</h2>
+                </div>
+                
+                <div class="trading-panel">
+                    <h3>포지션 선택</h3>
+                    <div class="position-buttons">
+                        <button id="longBtn" class="position-btn">Long</button>
+                        <button id="neutralBtn" class="position-btn">Neutral</button>
+                        <button id="shortBtn" class="position-btn">Short</button>
+                    </div>
+                </div>
+                
+                <div class="result-panel">
+                    <div class="weekly-result">
+                        <h3>이번 주 PnL</h3>
+                        <p id="weeklyPnl">0.00%</p>
+                    </div>
+                    
+                    <div class="total-result">
+                        <h3>누적 PnL</h3>
+                        <p id="totalPnl">0.00%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pnl-chart-container">
+            <h2>누적 PnL 추이</h2>
+            <canvas id="pnlChart"></canvas>
+        </div>
+        
+        <div class="history-container">
+            <h2>트레이딩 기록</h2>
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>주차</th>
+                        <th>포지션</th>
+                        <th>PnL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 트레이딩 기록이 여기에 추가됩니다 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="gameOverModal" class="modal">
+            <div class="modal-content">
+                <h2>게임 종료!</h2>
+                <p>최종 PnL: <span id="finalPnl">0.00%</span></p>
+                <div class="modal-buttons">
+                    <button id="restartBtn" class="modal-btn">다시 시작</button>
+                    <button id="shareBtn" class="modal-btn share-btn">결과 공유</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
