@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stock Trading Simulator</title>
+    <title>주식 트레이딩 시뮬레이터</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
@@ -17,8 +17,8 @@
 <body>
     <div class="container">
         <div class="header-container">
-            <h1>Stock Trading Simulator</h1>
-            <button id="headerRestartBtn" class="restart-btn">Restart</button>
+            <h1>주식 트레이딩 시뮬레이터</h1>
+            <button id="headerRestartBtn" class="restart-btn">재시작</button>
         </div>
         
         <!-- Top Ad -->
@@ -34,9 +34,14 @@
             </script>
         </div>
         
+        <!-- 게임 설명 추가 -->
+        <div class="game-description">
+            <p>16주간의 트레이딩 시뮬레이션을 통해 투자실력을 검증해보세요! <br> 주가 상승을 예측하면 매수, 하락을 예측하면 매도하세요. 불확실한 장에서는 중립을 선택할 수 있습니다.</p>
+        </div>
+        
         <!-- Week info - Better visibility on mobile -->
         <div class="week-info">
-            <h2>Week: <span id="currentWeek">16</span>/31</h2>
+            <h2>주차: <span id="currentWeek">16</span>/31</h2>
         </div>
         
         <!-- Game container -->
@@ -50,23 +55,23 @@
             <div class="info-panel">
                 <!-- Trading panel -->
                 <div class="trading-panel">
-                    <h3>Select Position</h3>
+                    <h3>포지션 선택</h3>
                     <div class="position-buttons">
-                        <button id="longBtn" class="position-btn">Long</button>
-                        <button id="neutralBtn" class="position-btn">Neutral</button>
-                        <button id="shortBtn" class="position-btn">Short</button>
+                        <button id="longBtn" class="position-btn">매수</button>
+                        <button id="neutralBtn" class="position-btn">중립</button>
+                        <button id="shortBtn" class="position-btn">매도</button>
                     </div>
                 </div>
                 
                 <!-- Result panel -->
                 <div class="result-panel">
                     <div class="weekly-result">
-                        <h3>Weekly Profit</h3>
+                        <h3>주간 수익률</h3>
                         <p id="weeklyPnl">0.00%</p>
                     </div>
                     
                     <div class="total-result">
-                        <h3>Total Profit</h3>
+                        <h3>총 수익률</h3>
                         <p id="totalPnl">0.00%</p>
                     </div>
                 </div>
@@ -75,19 +80,19 @@
         
         <!-- Profit chart -->
         <div class="pnl-chart-container">
-            <h2>Profit Trend</h2>
+            <h2>수익률 추이</h2>
             <canvas id="pnlChart"></canvas>
         </div>
         
         <!-- Trading history -->
         <div class="history-container">
-            <h2>Trading History</h2>
+            <h2>트레이딩 기록</h2>
             <table id="historyTable">
                 <thead>
                     <tr>
-                        <th>Week</th>
-                        <th>Position</th>
-                        <th>Profit</th>
+                        <th>주차</th>
+                        <th>포지션</th>
+                        <th>수익률</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,17 +105,17 @@
         <div id="gameOverModal" class="modal">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <h2>Game Over!</h2>
-                <p>Final Return: <span id="finalPnl">0.00%</span></p>
-                <p>Buy and Hold Return: <span id="buyHoldPnl">0.00%</span></p>
+                <h2>게임 종료!</h2>
+                <p>최종 수익률: <span id="finalPnl">0.00%</span></p>
+                <p>종목 수익률: <span id="buyHoldPnl">0.00%</span></p>
                 <div class="game-info">
-                    <p>Ticker: <span id="gameTicker">Unknown</span></p>
-                    <p>Period: <span id="gamePeriod">2024-09-16 -- 2024-12-30</span></p>
+                    <p>종목: <span id="gameTicker">Unknown</span></p>
+                    <p>기간: <span id="gamePeriod">2024/09/16 - 2024/12/30</span></p>
                 </div>
                 <div class="modal-buttons">
-                    <button id="restartBtn" class="modal-btn">Restart</button>
-                    <button id="shareBtn" class="modal-btn">Share Results</button>
-                    <button id="closeModalBtn" class="modal-btn secondary-btn">Close</button>
+                    <button id="restartBtn" class="modal-btn">재시작</button>
+                    <button id="shareBtn" class="modal-btn">결과 공유</button>
+                    <button id="closeModalBtn" class="modal-btn secondary-btn">닫기</button>
                 </div>
             </div>
         </div>

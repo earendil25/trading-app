@@ -511,3 +511,22 @@ h1 {
         font-size: 1rem;
     }
 }
+
+/* 게임 설명 스타일 */
+.game-description {
+    text-align: center;
+    margin: 15px auto;
+    padding: 10px;
+    max-width: 800px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.game-description p {
+    font-size: 16px;
+    color: #333;
+    margin: 0;
+    padding: 5px;
+    line-height: 1.5;
+}

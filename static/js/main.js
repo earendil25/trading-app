@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 초기 데이터 (시작점)
-        const labels = ['Week 16'];
+        const labels = ['주차 16'];
         const data = [0];
         
         // 차트 생성 - 성능 최적화
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '누적 PnL (%)',
+                    label: '누적 수익률 (%)',
                     data: data,
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         intersect: false,
                         callbacks: {
                             label: function(context) {
-                                return `PnL: ${context.parsed.y.toFixed(2)}%`;
+                                return `수익률: ${context.parsed.y.toFixed(2)}%`;
                             }
                         }
                     }
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 주차 라벨 추가
-        pnlChart.data.labels.push(`Week ${week}`);
+        pnlChart.data.labels.push(`주차 ${week}`);
         
         // 누적 PnL 데이터 추가
         pnlChart.data.datasets[0].data.push(pnl);
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
             totalPnl += weeklyPnl;
             
             // 트레이드 기록 추가
-            addHistoryRow(currentWeek, position, weeklyPnl);
+            addTradeToHistory(position, weeklyPnl);
             tradeHistory.push({
                 week: currentWeek,
                 position: position,
@@ -483,14 +483,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 기록 테이블에 행 추가
-    function addHistoryRow(week, position, pnl) {
+    function addTradeToHistory(position, pnl) {
         const row = document.createElement('tr');
         
         const weekCell = document.createElement('td');
-        weekCell.textContent = week;  // 16주차부터 시작
+        weekCell.textContent = currentWeek;
         
         const positionCell = document.createElement('td');
-        positionCell.textContent = position.charAt(0).toUpperCase() + position.slice(1);
+        // 포지션 한글화
+        let positionText = '';
+        switch(position) {
+            case 'long':
+                positionText = '매수';
+                break;
+            case 'neutral':
+                positionText = '중립';
+                break;
+            case 'short':
+                positionText = '매도';
+                break;
+            default:
+                positionText = position.charAt(0).toUpperCase() + position.slice(1);
+        }
+        positionCell.textContent = positionText;
         
         const pnlCell = document.createElement('td');
         pnlCell.textContent = formatPnl(pnl);
@@ -501,6 +516,10 @@ document.addEventListener('DOMContentLoaded', function() {
         row.appendChild(pnlCell);
         
         historyTableBody.appendChild(row);
+        
+        // 스크롤을 맨 아래로 이동
+        const historyContainer = document.querySelector('.history-container');
+        historyContainer.scrollTop = historyContainer.scrollHeight;
     }
     
     // 기록 테이블 초기화
@@ -568,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (gamePeriodElement) {
             // 거래기간 하드코딩
-            gamePeriodElement.textContent = "2024-09-16 -- 2024-12-30";
+            gamePeriodElement.textContent = "2024/09/16 -- 2024/12/30";
         } else {
             console.error('gamePeriod 요소를 찾을 수 없습니다.');
         }
@@ -619,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 게임 재시작 - 확인 대화상자 표시
     function restartGameWithConfirm() {
-        if (confirm('Are you sure you want to restart the game with a new random stock?')) {
+        if (confirm('새로운 랜덤 종목으로 게임을 다시 시작하시겠습니까? 현재 진행 상황은 저장되지 않습니다.')) {
             restartGame();
         }
     }
@@ -631,18 +650,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const buyHoldPnl = buyHoldPnlElement ? buyHoldPnlElement.textContent : 'N/A';
         
         // 공유할 텍스트 생성 - 누적 Profit, Buy and Hold 수익률, 종목, 기간 및 게임 링크 포함
-        const shareText = `I achieved a return of ${formatPnl(totalPnl)} in the Stock Trading Simulator!
-Buy and Hold Return: ${buyHoldPnl}
-Ticker: ${gameInfo.ticker}
-Period: 2024-09-16 -- 2024-12-30
-Try it yourself!`;
+        const shareText = `주식 트레이딩 시뮬레이터에서 ${formatPnl(totalPnl)}의 수익률을 달성했습니다!
+종목 수익률: ${buyHoldPnl}
+종목: ${gameInfo.ticker}
+직접 도전해보세요!`;
         
         const shareUrl = window.location.href;
         const fullShareText = `${shareText}\n${shareUrl}`;
         
         // 공유 데이터 생성
         const shareData = {
-            title: 'Stock Trading Simulator Results',
+            title: '주식 트레이딩 시뮬레이터 결과',
             text: shareText,
             url: shareUrl
         };
@@ -651,11 +669,11 @@ Try it yourself!`;
         if (navigator.share && navigator.canShare(shareData)) {
             navigator.share(shareData)
                 .then(() => {
-                    console.log('Share successful');
-                    showShareNotification('Results shared successfully!');
+                    console.log('공유 성공');
+                    showShareNotification('결과가 성공적으로 공유되었습니다!');
                 })
                 .catch((error) => {
-                    console.log('Share failed:', error);
+                    console.log('공유 실패:', error);
                     // 공유 실패 시 클립보드에 복사
                     copyToClipboard(fullShareText);
                 });
@@ -670,10 +688,10 @@ Try it yourself!`;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text)
                 .then(() => {
-                    showShareNotification('Results copied to clipboard!');
+                    showShareNotification('결과가 클립보드에 복사되었습니다!');
                 })
                 .catch(err => {
-                    console.error('Clipboard copy failed:', err);
+                    console.error('클립보드 복사 실패:', err);
                     fallbackCopyToClipboard(text);
                 });
         } else {
@@ -695,13 +713,13 @@ Try it yourself!`;
         try {
             const successful = document.execCommand('copy');
             if (successful) {
-                showShareNotification('Results copied to clipboard!');
+                showShareNotification('결과가 클립보드에 복사되었습니다!');
             } else {
-                showShareNotification('Failed to copy to clipboard.');
+                showShareNotification('클립보드에 복사하지 못했습니다.');
             }
         } catch (err) {
-            console.error('Clipboard copy failed:', err);
-            showShareNotification('Failed to copy to clipboard.');
+            console.error('클립보드 복사 실패:', err);
+            showShareNotification('클립보드에 복사하지 못했습니다.');
         }
         
         document.body.removeChild(textArea);
