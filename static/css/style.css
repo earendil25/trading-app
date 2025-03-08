@@ -288,4 +288,12 @@ tr:hover {
 
 .share-notification.show {
     opacity: 1;
+}
+
+/* 광고 컨테이너 스타일 */
+.ad-container {
+    width: 100%;
+    margin: 20px 0;
+    text-align: center;
+    overflow: hidden;
 } 
