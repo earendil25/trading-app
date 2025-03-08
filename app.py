@@ -14,7 +14,7 @@ game_sessions = {}
 def load_stock_data(session_id=None):
     # 이미 로드된 세션 데이터가 있으면 그것을 반환
     if session_id and session_id in game_sessions:
-        return game_sessions[session_id]
+        return game_sessions[session_id].get('data', [])
     
     try:
         # 데이터 폴더 경로 확인
@@ -32,7 +32,10 @@ def load_stock_data(session_id=None):
         selected_file = random.choice(data_files)
         file_path = os.path.join(data_folder, selected_file)
         
-        print(f"선택된 파일: {file_path}")
+        # 파일 이름에서 ticker 추출 (확장자 제외)
+        ticker = os.path.splitext(selected_file)[0]
+        
+        print(f"선택된 파일: {file_path}, Ticker: {ticker}")
         
         # 파일 존재 확인
         if not os.path.exists(file_path):
@@ -66,9 +69,12 @@ def load_stock_data(session_id=None):
         if len(result) < 32:
             raise ValueError(f"데이터가 충분하지 않습니다. 필요: 32개, 현재: {len(result)}개")
         
-        # 세션 ID가 제공되면 데이터를 세션에 저장
+        # 세션 ID가 제공되면 데이터와 ticker를 세션에 저장
         if session_id:
-            game_sessions[session_id] = result
+            game_sessions[session_id] = {
+                'data': result,
+                'ticker': ticker
+            }
         
         return result
     
@@ -136,8 +142,17 @@ def get_stock_data():
 def submit_trade():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'error': '요청 데이터가 없습니다.'}), 400
+            
         position = data.get('position')
         current_week = data.get('currentWeek')
+        
+        if position not in ['long', 'short', 'neutral']:
+            return jsonify({'error': f'유효하지 않은 포지션: {position}'}), 400
+            
+        if current_week is None:
+            return jsonify({'error': '주차 정보가 없습니다.'}), 400
         
         print(f"트레이드 요청: 포지션={position}, 주차={current_week}")
         
@@ -146,13 +161,16 @@ def submit_trade():
         if not session_id:
             return jsonify({'error': '세션이 유효하지 않습니다.'}), 400
             
-        stock_data = load_stock_data(session_id)
+        if session_id not in game_sessions:
+            return jsonify({'error': '세션 데이터를 찾을 수 없습니다. 게임을 다시 시작해주세요.'}), 400
+            
+        stock_data = game_sessions[session_id].get('data', [])
+        ticker = game_sessions[session_id].get('ticker', 'Unknown')
         
         if not stock_data or len(stock_data) < 32:
             return jsonify({'error': '주식 데이터가 충분하지 않습니다.'}), 400
         
         # 현재 게임 주차에 해당하는 데이터 인덱스 계산
-        # 16주차는 인덱스 16을 사용 (0부터 시작하는 인덱스)
         current_data_idx = current_week
         
         # 이전 주차 데이터 인덱스 (PnL 계산용)
@@ -161,21 +179,26 @@ def submit_trade():
         print(f"데이터 인덱스: 이전={prev_data_idx}, 현재={current_data_idx}, 데이터 길이={len(stock_data)}")
         
         # 인덱스 범위 확인
-        if prev_data_idx < 0 or current_data_idx >= len(stock_data):
-            return jsonify({'error': f'주차 인덱스({current_data_idx})가 유효하지 않습니다.'}), 400
+        if prev_data_idx < 0:
+            return jsonify({'error': '첫 주차에서는 PnL을 계산할 수 없습니다.'}), 400
+            
+        if current_data_idx >= len(stock_data):
+            return jsonify({'error': f'주차 인덱스({current_data_idx})가 데이터 범위를 벗어났습니다.'}), 400
         
         # 현재 주차와 이전 주차 데이터로 PnL 계산
-        prev_data = stock_data[prev_data_idx]
-        current_data = stock_data[current_data_idx]
-        
-        # PnL 계산 (현재 주차 close와 이전 주차 close 사용)
-        pnl = calculate_pnl(position, prev_data, current_data)
+        try:
+            prev_data = stock_data[prev_data_idx]
+            current_data = stock_data[current_data_idx]
+            
+            # PnL 계산 (현재 주차 close와 이전 주차 close 사용)
+            pnl = calculate_pnl(position, prev_data, current_data)
+        except Exception as e:
+            return jsonify({'error': f'PnL 계산 중 오류 발생: {str(e)}'}), 500
         
         # 다음 게임 주차 (UI에 표시될 주차)
         next_game_week = current_week + 1
         
         # 다음 주차를 위한 차트 데이터 준비
-        # 다음 주차의 데이터 인덱스에 해당하는 이전 16주 데이터
         next_data_idx = current_data_idx + 1
         
         # 다음 주차 데이터가 있는지 확인
@@ -183,11 +206,11 @@ def submit_trade():
             return jsonify({
                 'pnl': round(pnl, 2),
                 'nextData': None,
-                'isLastWeek': True
+                'isLastWeek': True,
+                'ticker': ticker
             })
         
         # 다음 주차를 위한 데이터 윈도우 준비 (이전 16주 데이터)
-        # n주차 게임에서는 n-16부터 n-1주의 데이터만 표시
         start_idx = next_data_idx - 16  # 시작 인덱스 (다음 주차 - 16)
         end_idx = next_data_idx         # 종료 인덱스 (다음 주차 - 1)
         
@@ -200,11 +223,19 @@ def submit_trade():
         # 게임 종료 조건: 31주차까지 진행했거나 더 이상 데이터가 없는 경우
         is_last_week = next_game_week >= 32 or next_data_idx >= len(stock_data)
         
-        return jsonify({
+        response_data = {
             'pnl': round(pnl, 2),
             'nextData': next_data_window,
             'isLastWeek': is_last_week
-        })
+        }
+        
+        # 게임이 종료되는 경우 ticker와 날짜 정보 추가
+        if is_last_week:
+            response_data.update({
+                'ticker': ticker
+            })
+        
+        return jsonify(response_data)
     
     except Exception as e:
         print(f"트레이드 제출 중 오류 발생: {str(e)}")

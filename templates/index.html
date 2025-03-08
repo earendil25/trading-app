@@ -10,15 +10,15 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
     
-    <!-- Google AdSense 코드 -->
+    <!-- Google AdSense 코드 - 헤드 섹션에 추가 -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container">
         <h1>주식 모의 트레이딩</h1>
         
-        <!-- 상단 광고 -->
-        <div class="ad-container">
+        <!-- 상단 광고 - 제목 바로 아래에 배치 -->
+        <div class="ad-container ad-container-top">
             <ins class="adsbygoogle"
                  style="display:block"
                  data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
@@ -87,7 +87,13 @@
         <div id="gameOverModal" class="modal">
             <div class="modal-content">
                 <h2>게임 종료!</h2>
-                <p>최종 PnL: <span id="finalPnl">0.00%</span></p>
+                <p class="final-pnl-text">최종 수익률: <span id="finalPnl">0.00%</span></p>
+                
+                <div class="game-info">
+                    <p><strong>거래종목:</strong> <span id="gameTicker">Unknown</span></p>
+                    <p><strong>거래기간:</strong> <span id="gamePeriod">2024-09-16 -- 2024-12-30</span></p>
+                </div>
+                
                 <div class="modal-buttons">
                     <button id="restartBtn" class="modal-btn">다시 시작</button>
                     <button id="shareBtn" class="modal-btn share-btn">결과 공유</button>
@@ -95,12 +101,12 @@
             </div>
         </div>
         
-        <!-- 하단 광고 -->
+        <!-- 기존 하단 광고 -->
         <div class="ad-container">
             <ins class="adsbygoogle"
                  style="display:block"
                  data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
-                 data-ad-slot="YOUR_AD_SLOT_ID"
+                 data-ad-slot="YOUR_AD_SLOT_ID_2"
                  data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
             <script>

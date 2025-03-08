@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let tradeHistory = [];
     let stockChart = null;
     let pnlChart = null;  // PnL 차트 변수 추가
+    let gameInfo = {
+        ticker: 'Unknown'
+        // 날짜 정보 제거 (하드코딩으로 대체)
+    };
     
     // DOM 요소
     const longBtn = document.getElementById('longBtn');
@@ -376,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 트레이드 제출 함수
+    // 트레이드 제출 함수 개선
     function submitTrade(position) {
         // 트레이드 버튼 비활성화
         disableTradeButtons();
@@ -396,7 +400,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => {
             console.log("서버 응답 상태:", response.status);
             if (!response.ok) {
-                throw new Error(`서버 응답 오류: ${response.status}`);
+                return response.json().then(data => {
+                    throw new Error(data.error || `서버 응답 오류: ${response.status}`);
+                });
             }
             return response.json();
         })
@@ -407,50 +413,68 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error);
             }
             
-            const weeklyPnl = data.pnl;
-            
-            // 트레이드 기록 업데이트
-            tradeHistory.push({
-                week: currentWeek,
-                position: position,
-                pnl: weeklyPnl
-            });
-            
-            // PnL 업데이트
-            totalPnl += weeklyPnl;
-            updatePnlDisplay(weeklyPnl);
-            
-            // 다음 주차 계산
-            const nextWeek = currentWeek + 1;
-            
-            // PnL 차트 업데이트
-            updatePnlChart(currentWeek, totalPnl);
-            
-            // 기록 테이블 업데이트
-            addHistoryRow(currentWeek, position, weeklyPnl);
-            
-            // 다음 주로 이동
-            currentWeek = nextWeek;
-            updateWeekDisplay();
-            
-            // 다음 주 데이터가 있으면 차트 업데이트
-            if (data.nextData) {
-                console.log(`다음 주 데이터 수신: ${data.nextData.length}개 항목`);
-                // 롤링 윈도우 데이터로 stockData 업데이트
-                stockData = data.nextData;
-                renderChart();
-                enableTradeButtons();
-            }
-            
-            // 게임 종료 체크
-            if (data.isLastWeek) {
-                endGame();
+            try {
+                // 주간 PnL 계산 및 표시
+                const weeklyPnl = data.pnl;
+                updatePnlDisplay(weeklyPnl);
+                
+                // 트레이드 기록 업데이트
+                tradeHistory.push({
+                    week: currentWeek,
+                    position: position,
+                    pnl: weeklyPnl
+                });
+                
+                // 누적 PnL 업데이트
+                totalPnl += weeklyPnl;
+                
+                // 다음 주차 계산
+                const nextWeek = currentWeek + 1;
+                
+                // PnL 차트 업데이트
+                updatePnlChart(currentWeek, totalPnl);
+                
+                // 기록 테이블 업데이트
+                addHistoryRow(currentWeek, position, weeklyPnl);
+                
+                // 다음 주로 이동
+                currentWeek = nextWeek;
+                updateWeekDisplay();
+                
+                // 다음 주 데이터가 있으면 차트 업데이트
+                if (data.nextData) {
+                    console.log(`다음 주 데이터 수신: ${data.nextData.length}개 항목`);
+                    // 롤링 윈도우 데이터로 stockData 업데이트
+                    stockData = data.nextData;
+                    renderChart();
+                    enableTradeButtons();
+                }
+                
+                // 게임 종료 체크
+                if (data.isLastWeek) {
+                    // ticker 정보만 저장
+                    gameInfo = {
+                        ticker: data.ticker || 'Unknown'
+                        // 날짜 정보 제거 (하드코딩으로 대체)
+                    };
+                    
+                    // 게임 종료 처리를 try-catch로 감싸기
+                    try {
+                        endGame();
+                    } catch (endGameError) {
+                        console.error('게임 종료 처리 중 오류 발생:', endGameError);
+                        alert('게임이 종료되었지만 결과 표시 중 오류가 발생했습니다.');
+                    }
+                }
+            } catch (processingError) {
+                console.error('데이터 처리 중 오류 발생:', processingError);
+                throw new Error('데이터 처리 중 오류가 발생했습니다: ' + processingError.message);
             }
         })
         .catch(error => {
             console.error('Error submitting trade:', error);
             alert('트레이드 제출에 실패했습니다: ' + error.message);
-            enableTradeButtons();
+            enableTradeButtons(); // 오류 발생 시 버튼 다시 활성화
         });
     }
     
@@ -525,8 +549,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 게임 종료
     function endGame() {
+        // 최종 PnL 표시
         finalPnlElement.textContent = formatPnl(totalPnl);
         finalPnlElement.className = getPnlColorClass(totalPnl);
+        
+        // 게임 정보 표시 업데이트 - 요소 존재 여부 확인 추가
+        const gameTickerElement = document.getElementById('gameTicker');
+        const gamePeriodElement = document.getElementById('gamePeriod');
+        
+        if (gameTickerElement) {
+            gameTickerElement.textContent = gameInfo.ticker;
+        } else {
+            console.error('gameTicker 요소를 찾을 수 없습니다.');
+        }
+        
+        if (gamePeriodElement) {
+            // 거래기간 하드코딩
+            gamePeriodElement.textContent = "2024-09-16 -- 2024-12-30";
+        } else {
+            console.error('gamePeriod 요소를 찾을 수 없습니다.');
+        }
+        
+        // 모달 표시
         gameOverModal.style.display = 'flex';
     }
     
@@ -555,13 +599,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 게임 결과 공유
     function shareResults() {
-        // 공유할 텍스트 생성
-        const shareText = `주식 모의 트레이딩 게임 결과: 최종 PnL ${formatPnl(totalPnl)}! 당신도 도전해보세요!`;
+        // 공유할 텍스트 생성 - 누적 PnL, 종목, 기간 및 게임 링크 포함
+        const shareText = `주식 모의 트레이딩 게임에서 ${formatPnl(totalPnl)}의 수익률을 달성했습니다!
+거래종목: ${gameInfo.ticker}
+기간: 2024-09-16 -- 2024-12-30
+당신도 도전해보세요!`;
+        
         const shareUrl = window.location.href;
+        const fullShareText = `${shareText}\n${shareUrl}`;
         
         // 공유 데이터 생성
         const shareData = {
-            title: '주식 모의 트레이딩 게임',
+            title: '주식 모의 트레이딩 게임 결과',
             text: shareText,
             url: shareUrl
         };
@@ -569,31 +618,66 @@ document.addEventListener('DOMContentLoaded', function() {
         // Web Share API 지원 확인
         if (navigator.share && navigator.canShare(shareData)) {
             navigator.share(shareData)
-                .then(() => console.log('공유 성공'))
-                .catch((error) => console.log('공유 실패:', error));
+                .then(() => {
+                    console.log('공유 성공');
+                    showShareNotification('결과가 성공적으로 공유되었습니다!');
+                })
+                .catch((error) => {
+                    console.log('공유 실패:', error);
+                    // 공유 실패 시 클립보드에 복사
+                    copyToClipboard(fullShareText);
+                });
         } else {
             // Web Share API를 지원하지 않는 경우 클립보드에 복사
-            const fullShareText = `${shareText}\n${shareUrl}`;
-            
-            navigator.clipboard.writeText(fullShareText)
+            copyToClipboard(fullShareText);
+        }
+    }
+    
+    // 클립보드에 복사하는 함수 (코드 분리)
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
                 .then(() => {
                     showShareNotification('결과가 클립보드에 복사되었습니다!');
                 })
                 .catch(err => {
                     console.error('클립보드 복사 실패:', err);
                     // 대체 방법: 텍스트 영역 생성 후 복사
-                    const textArea = document.createElement('textarea');
-                    textArea.value = fullShareText;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    showShareNotification('결과가 클립보드에 복사되었습니다!');
+                    fallbackCopyToClipboard(text);
                 });
+        } else {
+            // 구형 브라우저 지원
+            fallbackCopyToClipboard(text);
         }
     }
     
-    // 공유 알림 표시
+    // 대체 클립보드 복사 방법
+    function fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';  // 화면 밖으로 위치시킴
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showShareNotification('결과가 클립보드에 복사되었습니다!');
+            } else {
+                showShareNotification('클립보드 복사에 실패했습니다.');
+            }
+        } catch (err) {
+            console.error('클립보드 복사 실패:', err);
+            showShareNotification('클립보드 복사에 실패했습니다.');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    // 공유 알림 표시 함수 개선
     function showShareNotification(message) {
         // 이미 존재하는 알림 제거
         const existingNotification = document.querySelector('.share-notification');
@@ -607,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
         notification.textContent = message;
         document.body.appendChild(notification);
         
-        // 알림 표시
+        // 알림 표시 (애니메이션 효과 추가)
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
@@ -616,7 +700,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => {
-                document.body.removeChild(notification);
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
             }, 300);
         }, 3000);
     }

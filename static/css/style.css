@@ -270,24 +270,28 @@ tr:hover {
     background-color: #2980b9;
 }
 
-/* 공유 알림 */
+/* 공유 알림 스타일 개선 */
 .share-notification {
     position: fixed;
     bottom: 20px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(100px);
     background-color: #2ecc71;
     color: white;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     z-index: 1000;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    text-align: center;
+    min-width: 250px;
 }
 
 .share-notification.show {
     opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* 광고 컨테이너 스타일 */
@@ -296,4 +300,43 @@ tr:hover {
     margin: 20px 0;
     text-align: center;
     overflow: hidden;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* 상단 광고 특별 스타일 */
+.ad-container-top {
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+/* 게임 정보 스타일 개선 */
+.game-info {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    text-align: left;
+    border-left: 4px solid #3498db;
+}
+
+.game-info p {
+    margin: 8px 0;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+#gameTicker {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+#gamePeriod {
+    font-family: monospace;
+    color: #555;
+    background-color: #eee;
+    padding: 2px 5px;
+    border-radius: 3px;
 } 
