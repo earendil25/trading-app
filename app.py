@@ -278,16 +278,18 @@ def restart_game():
         session_id = str(uuid.uuid4())
         session['game_session_id'] = session_id
         
-        # 클라이언트에서 전달된 ticker 확인
-        data = request.get_json() or {}
-        ticker = data.get('ticker')
+        # 항상 랜덤 티커 사용 (클라이언트에서 전달된 ticker 무시)
+        ticker = None
         
-        # 새 세션을 위한 데이터 로드
-        data, ticker = load_stock_data(ticker=ticker, session_id=session_id)
+        print(f"게임 재시작 요청: 랜덤 티커 사용")
+        
+        # 새 세션을 위한 데이터 로드 (랜덤 티커)
+        data, selected_ticker = load_stock_data(ticker=ticker, session_id=session_id)
         
         return jsonify({
             'success': True,
-            'ticker': ticker
+            'ticker': selected_ticker,
+            'randomSelected': True
         })
     except Exception as e:
         print(f"게임 재시작 중 오류 발생: {str(e)}")

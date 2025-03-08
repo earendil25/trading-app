@@ -577,19 +577,16 @@ document.addEventListener('DOMContentLoaded', function() {
         gameOverModal.style.display = 'flex';
     }
     
-    // 게임 재시작
+    // 게임 재시작 - 항상 랜덤 티커로 재시작
     function restartGame() {
-        // 이전 게임의 ticker 정보 사용
-        const restartData = {
-            ticker: gameInfo.ticker
-        };
+        console.log("게임 재시작 요청 (랜덤 티커)");
         
         fetch('/api/restart-game', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(restartData)
+            body: JSON.stringify({})  // 빈 객체 전송 (서버에서 무시됨)
         })
         .then(response => {
             if (!response.ok) {
@@ -605,12 +602,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // 모달 닫기
             gameOverModal.style.display = 'none';
             
-            // 게임 초기화
+            // 새 티커 정보로 게임 상태 업데이트
             if (data.ticker) {
                 gameInfo.ticker = data.ticker;
                 saveGameState();
             }
             
+            // 게임 초기화
             initGame();
         })
         .catch(error => {
@@ -621,15 +619,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 게임 재시작 - 확인 대화상자 표시
     function restartGameWithConfirm() {
-        if (confirm('Are you sure you want to restart the game? Current progress will not be saved.')) {
+        if (confirm('Are you sure you want to restart the game with a new random stock?')) {
             restartGame();
         }
     }
     
     // 게임 결과 공유
     function shareResults() {
-        // 공유할 텍스트 생성 - 누적 Profit, 종목, 기간 및 게임 링크 포함
+        // Buy and Hold PnL 값 가져오기
+        const buyHoldPnlElement = document.getElementById('buyHoldPnl');
+        const buyHoldPnl = buyHoldPnlElement ? buyHoldPnlElement.textContent : 'N/A';
+        
+        // 공유할 텍스트 생성 - 누적 Profit, Buy and Hold 수익률, 종목, 기간 및 게임 링크 포함
         const shareText = `I achieved a return of ${formatPnl(totalPnl)} in the Stock Trading Simulator!
+Buy and Hold Return: ${buyHoldPnl}
 Ticker: ${gameInfo.ticker}
 Period: 2024-09-16 -- 2024-12-30
 Try it yourself!`;
