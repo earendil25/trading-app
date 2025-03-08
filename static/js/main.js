@@ -34,11 +34,42 @@ document.addEventListener('DOMContentLoaded', function() {
     restartBtn.addEventListener('click', restartGame);
     shareBtn.addEventListener('click', shareResults);
     
+    // 게임 상태 저장 함수
+    function saveGameState() {
+        const gameState = {
+            ticker: gameInfo.ticker
+        };
+        localStorage.setItem('gameState', JSON.stringify(gameState));
+        console.log("게임 상태 저장:", gameState);
+    }
+    
+    // 게임 상태 로드 함수
+    function loadGameState() {
+        try {
+            const savedState = localStorage.getItem('gameState');
+            if (savedState) {
+                return JSON.parse(savedState);
+            }
+        } catch (e) {
+            console.error("게임 상태 로드 실패:", e);
+        }
+        return null;
+    }
+    
     // 게임 초기화 함수
     function initGame() {
         console.log("게임 초기화 시작...");
         
-        fetch('/api/stock-data')
+        // 로컬 스토리지에서 이전 게임의 ticker 확인
+        const savedState = loadGameState();
+        const savedTicker = savedState ? savedState.ticker : null;
+        
+        // ticker 파라미터 추가
+        const url = savedTicker ? 
+            `/api/stock-data?ticker=${encodeURIComponent(savedTicker)}` : 
+            '/api/stock-data';
+        
+        fetch(url)
             .then(response => {
                 console.log("서버 응답 상태:", response.status);
                 if (!response.ok) {
@@ -48,15 +79,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return response.json();
             })
-            .then(data => {
-                console.log("데이터 수신 성공:", data.length, "개 항목");
+            .then(response => {
+                console.log("데이터 수신 성공:", response);
                 
-                if (!data || data.length === 0) {
+                if (!response.data || response.data.length === 0) {
                     console.error("빈 데이터 수신");
                     throw new Error("서버에서 빈 데이터를 반환했습니다");
                 }
                 
-                stockData = data;
+                stockData = response.data;
+                gameInfo.ticker = response.ticker;
+                
+                // 게임 상태 저장 (ticker 정보)
+                saveGameState();
+                
                 currentWeek = 16;  // 16주차부터 시작
                 totalPnl = 0;
                 tradeHistory = [];
@@ -68,6 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearHistoryTable();
                 
                 enableTradeButtons();
+                
+                // 게임 정보 업데이트
+                updateGameInfo();
             })
             .catch(error => {
                 console.error('Error fetching stock data:', error);
@@ -76,7 +115,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    // PnL 차트 초기화 함수
+    // 게임 정보 업데이트
+    function updateGameInfo() {
+        const tickerElement = document.getElementById('gameTicker');
+        if (tickerElement) {
+            tickerElement.textContent = gameInfo.ticker;
+        }
+    }
+    
+    // PnL 차트 초기화 함수 - 성능 최적화
     function initPnlChart() {
         const ctx = document.getElementById('pnlChart').getContext('2d');
         
@@ -380,25 +427,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 트레이드 제출 함수 개선
+    // 트레이드 제출 함수
     function submitTrade(position) {
-        // 트레이드 버튼 비활성화
         disableTradeButtons();
         
-        console.log(`트레이드 제출: ${position}, 주차: ${currentWeek}`);
+        const tradeData = {
+            position: position,
+            currentWeek: currentWeek,
+            ticker: gameInfo.ticker  // ticker 정보 추가
+        };
         
         fetch('/api/submit-trade', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                position: position,
-                currentWeek: currentWeek
-            })
+            body: JSON.stringify(tradeData)
         })
         .then(response => {
-            console.log("서버 응답 상태:", response.status);
             if (!response.ok) {
                 return response.json().then(data => {
                     throw new Error(data.error || `서버 응답 오류: ${response.status}`);
@@ -407,74 +453,56 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log("트레이드 응답 데이터:", data);
+            console.log("트레이드 응답:", data);
             
-            if (data.error) {
-                throw new Error(data.error);
+            // PnL 업데이트
+            const weeklyPnl = data.pnl;
+            totalPnl += weeklyPnl;
+            
+            // 트레이드 기록 추가
+            addHistoryRow(currentWeek, position, weeklyPnl);
+            tradeHistory.push({
+                week: currentWeek,
+                position: position,
+                pnl: weeklyPnl
+            });
+            
+            // PnL 표시 업데이트
+            updatePnlDisplay(weeklyPnl);
+            
+            // PnL 차트 업데이트
+            updatePnlChart(currentWeek, totalPnl);
+            
+            // 게임 종료 확인
+            if (data.isLastWeek) {
+                if (data.ticker) {
+                    gameInfo.ticker = data.ticker;
+                }
+                endGame();
+                return;
             }
             
-            try {
-                // 주간 PnL 계산 및 표시
-                const weeklyPnl = data.pnl;
-                updatePnlDisplay(weeklyPnl);
-                
-                // 트레이드 기록 업데이트
-                tradeHistory.push({
-                    week: currentWeek,
-                    position: position,
-                    pnl: weeklyPnl
-                });
-                
-                // 누적 PnL 업데이트
-                totalPnl += weeklyPnl;
-                
-                // 다음 주차 계산
-                const nextWeek = currentWeek + 1;
-                
-                // PnL 차트 업데이트
-                updatePnlChart(currentWeek, totalPnl);
-                
-                // 기록 테이블 업데이트
-                addHistoryRow(currentWeek, position, weeklyPnl);
-                
-                // 다음 주로 이동
-                currentWeek = nextWeek;
+            // 다음 주차 데이터로 차트 업데이트
+            if (data.nextData) {
+                stockData = data.nextData;
+                currentWeek++;
                 updateWeekDisplay();
-                
-                // 다음 주 데이터가 있으면 차트 업데이트
-                if (data.nextData) {
-                    console.log(`다음 주 데이터 수신: ${data.nextData.length}개 항목`);
-                    // 롤링 윈도우 데이터로 stockData 업데이트
-                    stockData = data.nextData;
-                    renderChart();
-                    enableTradeButtons();
-                }
-                
-                // 게임 종료 체크
-                if (data.isLastWeek) {
-                    // ticker 정보만 저장
-                    gameInfo = {
-                        ticker: data.ticker || 'Unknown'
-                        // 날짜 정보 제거 (하드코딩으로 대체)
-                    };
-                    
-                    // 게임 종료 처리를 try-catch로 감싸기
-                    try {
-                        endGame();
-                    } catch (endGameError) {
-                        console.error('게임 종료 처리 중 오류 발생:', endGameError);
-                        alert('게임이 종료되었지만 결과 표시 중 오류가 발생했습니다.');
-                    }
-                }
-            } catch (processingError) {
-                console.error('데이터 처리 중 오류 발생:', processingError);
-                throw new Error('데이터 처리 중 오류가 발생했습니다: ' + processingError.message);
+                renderChart();
             }
+            
+            // ticker 정보 업데이트
+            if (data.ticker) {
+                gameInfo.ticker = data.ticker;
+                saveGameState();
+                updateGameInfo();
+            }
+            
+            enableTradeButtons();
         })
         .catch(error => {
             console.error('Error submitting trade:', error);
-            alert('트레이드 제출에 실패했습니다: ' + error.message);
-            enableTradeButtons(); // 오류 발생 시 버튼 다시 활성화
+            alert(`트레이드 제출 중 오류가 발생했습니다: ${error.message}`);
+            enableTradeButtons();
         });
     }
     
@@ -576,24 +604,43 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 게임 재시작
     function restartGame() {
-        gameOverModal.style.display = 'none';
+        // 이전 게임의 ticker 정보 사용
+        const restartData = {
+            ticker: gameInfo.ticker
+        };
         
-        // 서버에 게임 재시작 요청
         fetch('/api/restart-game', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify(restartData)
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                initGame();
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || `서버 응답 오류: ${response.status}`);
+                });
             }
+            return response.json();
+        })
+        .then(data => {
+            console.log("게임 재시작 응답:", data);
+            
+            // 모달 닫기
+            gameOverModal.style.display = 'none';
+            
+            // 게임 초기화
+            if (data.ticker) {
+                gameInfo.ticker = data.ticker;
+                saveGameState();
+            }
+            
+            initGame();
         })
         .catch(error => {
             console.error('Error restarting game:', error);
-            initGame(); // 에러가 발생해도 게임 초기화 시도
+            alert(`게임 재시작 중 오류가 발생했습니다: ${error.message}`);
         });
     }
     

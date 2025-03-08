@@ -11,10 +11,15 @@ app.secret_key = 'trading_game_secret_key'  # 세션을 위한 시크릿 키 설
 # 게임 세션 데이터를 저장할 딕셔너리
 game_sessions = {}
 
-def load_stock_data(session_id=None):
+def load_stock_data(ticker=None, session_id=None):
+    """
+    주식 데이터 로드 함수
+    ticker: 특정 종목 코드 (지정하지 않으면 랜덤 선택)
+    session_id: 세션 ID
+    """
     # 이미 로드된 세션 데이터가 있으면 그것을 반환
     if session_id and session_id in game_sessions:
-        return game_sessions[session_id].get('data', [])
+        return game_sessions[session_id].get('data', []), game_sessions[session_id].get('ticker', 'Unknown')
     
     try:
         # 데이터 폴더 경로 확인
@@ -28,8 +33,18 @@ def load_stock_data(session_id=None):
         if not data_files:
             raise FileNotFoundError("CSV 파일이 없습니다. data 폴더에 CSV 파일을 추가해주세요.")
         
-        # 랜덤하게 주식 데이터 파일 선택
-        selected_file = random.choice(data_files)
+        # 특정 ticker가 지정된 경우 해당 파일 사용
+        if ticker:
+            file_name = f"{ticker}.csv"
+            if file_name in data_files:
+                selected_file = file_name
+            else:
+                print(f"지정된 ticker({ticker})의 파일이 없습니다. 랜덤 선택합니다.")
+                selected_file = random.choice(data_files)
+        else:
+            # 랜덤하게 주식 데이터 파일 선택
+            selected_file = random.choice(data_files)
+        
         file_path = os.path.join(data_folder, selected_file)
         
         # 파일 이름에서 ticker 추출 (확장자 제외)
@@ -76,7 +91,7 @@ def load_stock_data(session_id=None):
                 'ticker': ticker
             }
         
-        return result
+        return result, ticker
     
     except Exception as e:
         print(f"데이터 로드 중 오류 발생: {str(e)}")
@@ -106,7 +121,7 @@ def index():
     
     # 새 세션을 위한 데이터 로드 시도
     try:
-        load_stock_data(session_id)
+        load_stock_data(session_id=session_id)
     except Exception as e:
         print(f"초기 데이터 로드 실패: {str(e)}")
         # 오류가 발생해도 템플릿은 렌더링하고, 클라이언트에서 오류 처리
@@ -121,18 +136,27 @@ def get_stock_data():
             session_id = str(uuid.uuid4())
             session['game_session_id'] = session_id
         
-        data = load_stock_data(session_id)
+        # 클라이언트에서 전달된 ticker 확인
+        ticker = request.args.get('ticker')
+        
+        # 데이터 로드
+        data, ticker = load_stock_data(ticker=ticker, session_id=session_id)
         
         # 데이터 유효성 검사
         if not data or len(data) < 32:
             raise ValueError(f"유효하지 않은 데이터: {len(data) if data else 0}개 항목")
         
         # 16주차 게임을 위한 데이터 (0-15주차 데이터)
-        # 16주차 게임에서는 0-15주차 데이터를 표시
         result = data[:16]
         
-        print(f"클라이언트에 반환하는 데이터: {len(result)}개 항목")
-        return jsonify(result)
+        # 응답에 ticker 정보 추가
+        response = {
+            'data': result,
+            'ticker': ticker
+        }
+        
+        print(f"클라이언트에 반환하는 데이터: {len(result)}개 항목, ticker={ticker}")
+        return jsonify(response)
     
     except Exception as e:
         print(f"API 호출 중 오류 발생: {str(e)}")
@@ -162,7 +186,16 @@ def submit_trade():
             return jsonify({'error': '세션이 유효하지 않습니다.'}), 400
             
         if session_id not in game_sessions:
-            return jsonify({'error': '세션 데이터를 찾을 수 없습니다. 게임을 다시 시작해주세요.'}), 400
+            # 클라이언트에서 전달된 ticker로 데이터 다시 로드 시도
+            ticker = data.get('ticker')
+            if ticker:
+                try:
+                    print(f"세션 데이터 없음, ticker={ticker}로 다시 로드 시도")
+                    load_stock_data(ticker=ticker, session_id=session_id)
+                except Exception as e:
+                    return jsonify({'error': f'데이터 로드 실패: {str(e)}'}), 500
+            else:
+                return jsonify({'error': '세션 데이터를 찾을 수 없습니다. 게임을 다시 시작해주세요.'}), 400
             
         stock_data = game_sessions[session_id].get('data', [])
         ticker = game_sessions[session_id].get('ticker', 'Unknown')
@@ -226,14 +259,9 @@ def submit_trade():
         response_data = {
             'pnl': round(pnl, 2),
             'nextData': next_data_window,
-            'isLastWeek': is_last_week
+            'isLastWeek': is_last_week,
+            'ticker': ticker  # 항상 ticker 정보 포함
         }
-        
-        # 게임이 종료되는 경우 ticker와 날짜 정보 추가
-        if is_last_week:
-            response_data.update({
-                'ticker': ticker
-            })
         
         return jsonify(response_data)
     
@@ -250,10 +278,17 @@ def restart_game():
         session_id = str(uuid.uuid4())
         session['game_session_id'] = session_id
         
-        # 새 세션을 위한 데이터 로드
-        load_stock_data(session_id)
+        # 클라이언트에서 전달된 ticker 확인
+        data = request.get_json() or {}
+        ticker = data.get('ticker')
         
-        return jsonify({'success': True})
+        # 새 세션을 위한 데이터 로드
+        data, ticker = load_stock_data(ticker=ticker, session_id=session_id)
+        
+        return jsonify({
+            'success': True,
+            'ticker': ticker
+        })
     except Exception as e:
         print(f"게임 재시작 중 오류 발생: {str(e)}")
         return jsonify({'error': str(e)}), 500
