@@ -20,15 +20,13 @@ def load_stock_data(session_id=None):
         # 데이터 폴더 경로 확인
         data_folder = './data'
         if not os.path.exists(data_folder):
-            print(f"데이터 폴더가 존재하지 않습니다: {data_folder}")
-            return generate_sample_data()
+            raise FileNotFoundError(f"데이터 폴더가 존재하지 않습니다: {data_folder}")
         
         # 데이터 폴더에서 CSV 파일 목록 가져오기
         data_files = [f for f in os.listdir(data_folder) if f.endswith('.csv')]
         
         if not data_files:
-            print("CSV 파일이 없습니다. 샘플 데이터를 생성합니다.")
-            return generate_sample_data()
+            raise FileNotFoundError("CSV 파일이 없습니다. data 폴더에 CSV 파일을 추가해주세요.")
         
         # 랜덤하게 주식 데이터 파일 선택
         selected_file = random.choice(data_files)
@@ -38,8 +36,7 @@ def load_stock_data(session_id=None):
         
         # 파일 존재 확인
         if not os.path.exists(file_path):
-            print(f"파일이 존재하지 않습니다: {file_path}")
-            return generate_sample_data()
+            raise FileNotFoundError(f"파일이 존재하지 않습니다: {file_path}")
         
         # CSV 파일 로드
         df = pd.read_csv(file_path)
@@ -52,8 +49,7 @@ def load_stock_data(session_id=None):
         # OHLC 컬럼이 있는지 확인
         required_cols = ['Open', 'High', 'Low', 'Close']
         if not all(col in df.columns for col in required_cols):
-            print(f"필요한 컬럼이 없습니다. 필요한 컬럼: {required_cols}")
-            return generate_sample_data()
+            raise ValueError(f"필요한 컬럼이 없습니다. 필요한 컬럼: {required_cols}")
         
         # 데이터 포맷 변환
         result = []
@@ -68,10 +64,7 @@ def load_stock_data(session_id=None):
         
         # 데이터가 충분한지 확인 (최소 32개 필요)
         if len(result) < 32:
-            print(f"데이터가 충분하지 않습니다. 필요: 32개, 현재: {len(result)}개")
-            # 데이터가 부족하면 샘플 데이터로 보충
-            additional_data = generate_sample_data()
-            result.extend(additional_data[:(32 - len(result))])
+            raise ValueError(f"데이터가 충분하지 않습니다. 필요: 32개, 현재: {len(result)}개")
         
         # 세션 ID가 제공되면 데이터를 세션에 저장
         if session_id:
@@ -81,30 +74,7 @@ def load_stock_data(session_id=None):
     
     except Exception as e:
         print(f"데이터 로드 중 오류 발생: {str(e)}")
-        return generate_sample_data()
-
-def generate_sample_data():
-    # 샘플 데이터 생성 (실제 데이터가 없는 경우)
-    result = []
-    base_price = 100.0
-    
-    for i in range(32):  # 32주 데이터 생성
-        open_price = base_price * (1 + random.uniform(-0.05, 0.05))
-        close_price = open_price * (1 + random.uniform(-0.1, 0.1))
-        high_price = max(open_price, close_price) * (1 + random.uniform(0, 0.05))
-        low_price = min(open_price, close_price) * (1 - random.uniform(0, 0.05))
-        
-        result.append({
-            'date': f'Week {i+1}',
-            'open': round(open_price, 2),
-            'high': round(high_price, 2),
-            'low': round(low_price, 2),
-            'close': round(close_price, 2)
-        })
-        
-        base_price = close_price
-    
-    return result
+        raise
 
 def calculate_pnl(position, current_data, next_data):
     if position == 'neutral':
@@ -128,8 +98,12 @@ def index():
     session_id = str(uuid.uuid4())
     session['game_session_id'] = session_id
     
-    # 새 세션을 위한 데이터 로드
-    load_stock_data(session_id)
+    # 새 세션을 위한 데이터 로드 시도
+    try:
+        load_stock_data(session_id)
+    except Exception as e:
+        print(f"초기 데이터 로드 실패: {str(e)}")
+        # 오류가 발생해도 템플릿은 렌더링하고, 클라이언트에서 오류 처리
     
     return render_template('index.html')
 
@@ -145,9 +119,7 @@ def get_stock_data():
         
         # 데이터 유효성 검사
         if not data or len(data) < 32:
-            print(f"유효하지 않은 데이터: {len(data) if data else 0}개 항목")
-            # 샘플 데이터 생성
-            data = generate_sample_data()
+            raise ValueError(f"유효하지 않은 데이터: {len(data) if data else 0}개 항목")
         
         # 16주차 게임을 위한 데이터 (0-15주차 데이터)
         # 16주차 게임에서는 0-15주차 데이터를 표시
@@ -158,11 +130,7 @@ def get_stock_data():
     
     except Exception as e:
         print(f"API 호출 중 오류 발생: {str(e)}")
-        # 오류 발생 시 빈 응답 대신 에러 메시지와 함께 샘플 데이터 반환
-        return jsonify({
-            'error': str(e),
-            'data': generate_sample_data()[:16]
-        })
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/submit-trade', methods=['POST'])
 def submit_trade():
@@ -246,14 +214,18 @@ def submit_trade():
 
 @app.route('/api/restart-game', methods=['POST'])
 def restart_game():
-    # 새 게임 세션 ID 생성
-    session_id = str(uuid.uuid4())
-    session['game_session_id'] = session_id
-    
-    # 새 세션을 위한 데이터 로드
-    load_stock_data(session_id)
-    
-    return jsonify({'success': True})
+    try:
+        # 새 게임 세션 ID 생성
+        session_id = str(uuid.uuid4())
+        session['game_session_id'] = session_id
+        
+        # 새 세션을 위한 데이터 로드
+        load_stock_data(session_id)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"게임 재시작 중 오류 발생: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 

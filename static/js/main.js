@@ -38,7 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => {
                 console.log("서버 응답 상태:", response.status);
                 if (!response.ok) {
-                    throw new Error(`서버 응답 오류: ${response.status}`);
+                    return response.json().then(data => {
+                        throw new Error(data.error || `서버 응답 오류: ${response.status}`);
+                    });
                 }
                 return response.json();
             })
@@ -65,28 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error fetching stock data:', error);
-                
-                // 샘플 데이터로 대체
-                console.log("샘플 데이터로 게임 초기화 시도...");
-                generateSampleData()
-                    .then(sampleData => {
-                        stockData = sampleData;
-                        currentWeek = 16;
-                        totalPnl = 0;
-                        tradeHistory = [];
-                        
-                        updateWeekDisplay();
-                        renderChart();
-                        initPnlChart();  // PnL 차트 초기화
-                        updatePnlDisplay(0);
-                        clearHistoryTable();
-                        
-                        enableTradeButtons();
-                    })
-                    .catch(sampleError => {
-                        console.error('샘플 데이터 생성 실패:', sampleError);
-                        alert('주식 데이터를 불러오는 데 실패했습니다. 페이지를 새로고침해 주세요.');
-                    });
+                alert(`주식 데이터를 불러오는 데 실패했습니다: ${error.message}\n\n데이터 폴더에 CSV 파일이 있는지 확인해주세요.`);
+                disableTradeButtons();
             });
     }
     
